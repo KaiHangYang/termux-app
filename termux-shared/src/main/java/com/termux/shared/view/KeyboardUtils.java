@@ -84,19 +84,36 @@ public class KeyboardUtils {
         setDisableSoftKeyboardFlags(activity);
     }
 
+    /**
+     * Prevent the soft keyboard from being automatically shown, without making the window refuse
+     * IME focus entirely.
+     *
+     * This intentionally does NOT use {@link WindowManager.LayoutParams#FLAG_ALT_FOCUSABLE_IM}.
+     * That flag stops the window from interacting with any input method at all, which also blocks
+     * hardware-keyboard-driven IME composition (e.g. Chinese/Japanese/Korean input methods that
+     * pop up a composing/candidates window in response to physical key presses like Shift+Space).
+     * Using {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_ALWAYS_HIDDEN} only stops the
+     * on-screen keyboard layout from popping up automatically, while keeping the window able to
+     * receive IME focus so hardware keyboard IME composition keeps working.
+     */
     public static void setDisableSoftKeyboardFlags(final Activity activity) {
-        if (activity != null && activity.getWindow() != null)
-            activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM, WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        if (activity == null || activity.getWindow() == null) return;
+        int mode = activity.getWindow().getAttributes().softInputMode;
+        mode = (mode & ~WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE) | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
+        activity.getWindow().setSoftInputMode(mode);
     }
 
     public static void clearDisableSoftKeyboardFlags(final Activity activity) {
-        if (activity != null && activity.getWindow() != null)
-            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        if (activity == null || activity.getWindow() == null) return;
+        int mode = activity.getWindow().getAttributes().softInputMode;
+        mode = mode & ~WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE;
+        activity.getWindow().setSoftInputMode(mode);
     }
 
     public static boolean areDisableSoftKeyboardFlagsSet(final Activity activity) {
         if (activity == null ||  activity.getWindow() == null) return false;
-        return (activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM) != 0;
+        int state = activity.getWindow().getAttributes().softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE;
+        return state == WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
     }
 
     public static void setSoftKeyboardAlwaysHiddenFlags(final Activity activity) {
@@ -109,8 +126,13 @@ public class KeyboardUtils {
         // https://developer.android.com/reference/android/view/WindowManager.LayoutParams#SOFT_INPUT_ADJUST_RESIZE
         // https://medium.com/androiddevelopers/animating-your-keyboard-fb776a8fb66d
         // https://stackoverflow.com/a/65194077/14686958
-        if (activity != null && activity.getWindow() != null)
-            activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        if (activity == null || activity.getWindow() == null) return;
+        // Preserve the existing SOFT_INPUT_MASK_STATE bits (e.g. one set by
+        // setDisableSoftKeyboardFlags()/clearDisableSoftKeyboardFlags()) since setSoftInputMode()
+        // replaces the whole field and would otherwise clobber them.
+        int mode = activity.getWindow().getAttributes().softInputMode;
+        mode = (mode & ~WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST) | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        activity.getWindow().setSoftInputMode(mode);
     }
 
     /**
