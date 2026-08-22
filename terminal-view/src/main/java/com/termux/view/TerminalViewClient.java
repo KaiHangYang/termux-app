@@ -34,6 +34,15 @@ public interface TerminalViewClient {
 
     boolean shouldUseCtrlSpaceWorkaround();
 
+    /**
+     * Whether a hardware keyboard (physical or Bluetooth) is currently connected. Used by
+     * {@link TerminalView#onCreateInputConnection(android.view.inputmethod.EditorInfo)} to avoid
+     * reporting an {@link android.text.InputType} that CJK (Chinese/Japanese/Korean) input methods
+     * treat as a password/raw field, which makes them fall back to ASCII-only input and skip their
+     * hardware-keyboard-driven composing/candidates window.
+     */
+    boolean isHardwareKeyboardConnected();
+
     boolean isTerminalViewSelected();
 
 

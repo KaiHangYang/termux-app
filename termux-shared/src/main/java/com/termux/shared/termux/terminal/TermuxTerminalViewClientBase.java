@@ -34,6 +34,11 @@ public class TermuxTerminalViewClientBase implements TerminalViewClient {
     }
 
     @Override
+    public boolean isHardwareKeyboardConnected() {
+        return false;
+    }
+
+    @Override
     public boolean isTerminalViewSelected() {
         return true;
     }

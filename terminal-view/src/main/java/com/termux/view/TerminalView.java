@@ -310,7 +310,16 @@ public final class TerminalView extends View {
         // initially started with the alternate view or if activity is returned to from another app
         // and the alternate view was the one selected the last time.
         if (mClient.isTerminalViewSelected()) {
-            if (mClient.shouldEnforceCharBasedInput()) {
+            if (mClient.isHardwareKeyboardConnected()) {
+                // Both the TYPE_TEXT_VARIATION_VISIBLE_PASSWORD and TYPE_NULL input types below are
+                // treated by most CJK (Chinese/Japanese/Korean) input methods as a raw/password field,
+                // causing them to silently disable their hardware-keyboard-driven composing/candidates
+                // window and fall back to committing ASCII only. Report a plain text field instead so
+                // that hardware keyboard CJK IME composition (e.g. Shift+Space to toggle Pinyin) works.
+                // This does not affect how ASCII/control keys are delivered, since those keep arriving
+                // as regular KeyEvents to onKeyDown() regardless of the reported input type.
+                outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+            } else if (mClient.shouldEnforceCharBasedInput()) {
                 // Some keyboards seems do not reset the internal state on TYPE_NULL.
                 // Affects mostly Samsung stock keyboards.
                 // https://github.com/termux/termux-app/issues/686
